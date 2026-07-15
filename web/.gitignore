@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# typescript
+next-env.d.ts
+*.tsbuildinfo
+
+# generated / synced from the repo root at build time
+/public/macvitals.sh
+/public/macvitals-analyze.sh
+/lib/ruleset.generated.json
+
+# misc
+.DS_Store
+.vercel

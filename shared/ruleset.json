@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "_comment": "Canonical scoring ruleset for MacVitals. The web app imports this directly. The bash analyzer (macvitals-analyze.sh) loads it at runtime when present and falls back to identical built-in defaults when run standalone. Keep messages and tunables here as the single source of truth. See shared/README.md.",
+
+  "score": {
+    "start": 100,
+    "gradeBands": [
+      { "min": 85, "label": "Excellent" },
+      { "min": 70, "label": "Good" },
+      { "min": 50, "label": "Fair" },
+      { "min": 0, "label": "Poor" }
+    ]
+  },
+
+  "verdicts": {
+    "critical": {
+      "level": "critical",
+      "symbol": "[ X ]",
+      "label": "DO NOT BUY YET — serious issues must be resolved first"
+    },
+    "warn": {
+      "level": "warn",
+      "symbol": "[ ! ]",
+      "label": "PROCEED WITH CAUTION — some concerns to check or negotiate on"
+    },
+    "ok": {
+      "level": "ok",
+      "symbol": "[ OK ]",
+      "label": "LOOKS HEALTHY — reasonable to buy"
+    }
+  },
+
+  "categories": [
+    { "key": "storage", "title": "Storage / SSD", "icon": "💾" },
+    { "key": "security", "title": "Security & Ownership", "icon": "🔐" },
+    { "key": "battery", "title": "Battery", "icon": "🔋" },
+    { "key": "stability", "title": "Stability", "icon": "📜" },
+    { "key": "thermal", "title": "Thermal", "icon": "🌡️" }
+  ],
+
+  "tunables": {
+    "battery": { "goodPct": 85, "finePct": 80, "wornPct": 70, "deductWorn": 5, "deductBad": 10 },
+    "smart": { "deductBad": 40, "deductUnknown": 5 },
+    "activationLock": { "deductOn": 40, "deductUnknown": 5 },
+    "mdm": { "deduct": 30 },
+    "profiles": { "deduct": 10 },
+    "panics": { "deduct": 10 },
+    "thermal": { "deduct": 10 }
+  },
+
+  "messages": {
+    "smart.ok": "SSD self-check (SMART) reports \"Verified\" — the drive is not reporting failures.",
+    "smart.bad": "SSD SMART status is \"{smart}\" (should be \"Verified\"). This points to a failing or degraded drive.",
+    "smart.unknown": "SSD SMART status could not be read — verify the drive health manually before buying.",
+    "trim.ok": "SSD TRIM is enabled (normal, keeps the SSD healthy).",
+
+    "activationLock.ok": "Activation Lock is OFF — you will be able to set the Mac up as your own.",
+    "activationLock.on": "Activation Lock is ON. Until the seller removes it from their Apple ID, this Mac is effectively unusable by you.",
+    "activationLock.unknown": "Activation Lock status was not reported — confirm it is OFF before paying (System Settings > General > About, or ask the seller to sign out of iCloud in front of you).",
+
+    "mdm.managed": "The Mac is still enrolled in a company's device-management (MDM) system. A managed Mac can be remotely locked, wiped, or restricted by the previous owner's IT. It MUST be released from management before you buy.",
+    "mdm.clean": "No active device-management (MDM) enrollment detected.",
+
+    "profiles.present": "{n} configuration profile(s) are installed. On a properly wiped machine there should be none — these are leftovers from the previous (likely corporate) owner. Ask for a clean macOS reinstall.",
+    "profiles.none": "No leftover configuration profiles — consistent with a clean machine.",
+
+    "sip.ok": "System Integrity Protection (macOS's core self-protection) is enabled — normal and good.",
+    "sip.off": "System Integrity Protection appears disabled — unusual; ask why it was turned off.",
+    "gatekeeper.ok": "Gatekeeper (app security) is enabled — normal.",
+    "filevault.on": "FileVault disk encryption is currently ON. Make sure the seller either turns it off or does a full erase + reinstall of macOS at handover — otherwise you could be locked out of the disk.",
+
+    "battery.good": "Battery at {cap}% of original capacity — healthy.",
+    "battery.fine": "Battery at {cap}% capacity — mild wear, still fine for daily use.",
+    "battery.worn": "Battery at {cap}% capacity — noticeable wear. Replaceable later at an Apple service centre if it bothers you.",
+    "battery.bad": "Battery at {cap}% capacity — significantly worn. Budget for a replacement (this is a known, planned cost).",
+    "battery.cycles": "Battery charge cycles: {cycles}{conditionSuffix}.",
+
+    "panics.present": "{n} kernel-panic report(s) found on disk. Occasional panics can be software; repeated ones can indicate failing hardware. Check system.txt and ask the seller about crashes.",
+    "panics.none": "No kernel-panic crash reports found — a good stability sign.",
+
+    "thermal.throttled": "CPU was thermally throttled (speed limit {limit}%) at the moment of capture. If it stays below 100% when idle/cool, suspect a thermal problem (dried paste, dust, or fan).",
+    "thermal.ok": "CPU was running at full speed (no thermal throttling) at capture time."
+  },
+
+  "nextSteps": [
+    "Ask the seller to sign out of iCloud and erase the Mac (System Settings > General > Transfer or Reset > Erase All Content and Settings) IN FRONT OF YOU. This clears Activation Lock, device management, profiles and FileVault in one step.",
+    "Physically test every port with a real device/charger, and test the camera, speakers, microphone and keyboard.",
+    "Run Apple's built-in hardware test (see diagnostics.txt in the report folder) and note the reference code — ADP000 means no issues."
+  ],
+  "nextStepsCriticalExtra": "Because DEAL-BREAKERS were found, do not pay until they are fixed and you re-run this tool to confirm they are gone."
+}

@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Node / Next (web app)
+web/node_modules/
+web/.next/
+web/out/
+web/next-env.d.ts
+web/*.tsbuildinfo
+.vercel
+
+# Generated / synced from repo root at build time
+web/public/macvitals.sh
+web/public/macvitals-analyze.sh
+web/lib/ruleset.generated.json
+
+# Local report output (never commit a real machine's report)
+MacVitals_Report_*/
+MacVitals_Report_*.zip
