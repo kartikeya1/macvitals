@@ -45,6 +45,11 @@ export interface AnalysisInput {
   cpuSpeedLimit?: number | null; // undefined/null when unknown
 }
 
+export interface EvidenceRow {
+  label: string;
+  value: string;
+}
+
 export interface AnalysisResult {
   machine: { model: string; chip: string; ram: string; os: string; serial: string };
   score: number;
@@ -52,8 +57,18 @@ export interface AnalysisResult {
   verdict: { level: "critical" | "warn" | "ok"; symbol: string; label: string };
   findings: Finding[];
   groups: Record<Severity, Finding[]>;
+  byCategory: Record<string, Finding[]>;
+  evidence: Record<string, EvidenceRow[]>;
   nextSteps: string[];
   hasCritical: boolean;
+}
+
+/** Worst severity present in a set of findings, for a category's status pill. */
+export function worstSeverity(findings: Finding[]): Severity {
+  if (findings.some((f) => f.severity === "critical")) return "critical";
+  if (findings.some((f) => f.severity === "warn")) return "warn";
+  if (findings.some((f) => f.severity === "good")) return "good";
+  return "info";
 }
 
 interface Ruleset {
@@ -186,6 +201,50 @@ export function analyze(input: AnalysisInput): AnalysisResult {
   const nextSteps = [...R.nextSteps];
   if (hasCritical) nextSteps.push(R.nextStepsCriticalExtra);
 
+  // Findings grouped by subsystem, for the category cards.
+  const byCategory: Record<string, Finding[]> = {};
+  for (const cat of R.categories) byCategory[cat.key] = [];
+  for (const f of findings) (byCategory[f.category] ||= []).push(f);
+
+  // Raw evidence per category — the actual values the verdict is based on.
+  const rows = (arr: (EvidenceRow | null)[]): EvidenceRow[] => arr.filter(Boolean) as EvidenceRow[];
+  const row = (label: string, value: string | undefined | null): EvidenceRow | null =>
+    value ? { label, value } : null;
+
+  const activationReadable = al.includes("disabl") ? "Off" : al.includes("enabl") ? "On" : "Not reported";
+  const mdmReadable = managed ? "Enrolled" : mdm ? "None" : "Not reported";
+  const fvReadable = fv.includes(" on") || fv.includes("is on") ? "On" : fv ? "Off" : "";
+  const sipReadable = sip ? (sip.includes("enabled") ? "Enabled" : "Disabled") : "";
+  const gkReadable = gk ? (gk.includes("enabled") ? "Enabled" : "Disabled") : "";
+
+  const evidence: Record<string, EvidenceRow[]> = {
+    storage: rows([
+      row("SMART status", input.storage?.smart_status),
+      row("TRIM", input.storage?.trim_support),
+      row("Drive", input.storage?.ssd_model),
+      row("Capacity", input.storage?.capacity),
+    ]),
+    security: rows([
+      row("Activation Lock", activationReadable),
+      row("Device management (MDM)", mdmReadable),
+      row("Configuration profiles", profCount != null ? String(profCount) : null),
+      row("FileVault", fvReadable),
+      row("System Integrity Protection", sipReadable),
+      row("Gatekeeper", gkReadable),
+    ]),
+    battery: rows([
+      row("Maximum capacity", cap != null ? `${cap}%` : null),
+      row("Charge cycles", cycles),
+      row("Condition", input.battery?.condition),
+    ]),
+    thermal: rows([
+      row("CPU speed limit", input.cpuSpeedLimit != null ? `${input.cpuSpeedLimit}%` : null),
+    ]),
+    stability: rows([
+      row("Kernel panic reports", input.panics != null ? String(input.panics) : null),
+    ]),
+  };
+
   return {
     machine: {
       model: input.hardware?.model_name ?? "Unknown",
@@ -199,6 +258,8 @@ export function analyze(input: AnalysisInput): AnalysisResult {
     verdict,
     findings,
     groups,
+    byCategory,
+    evidence,
     nextSteps,
     hasCritical,
   };

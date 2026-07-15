@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { parseReportFile } from "@/lib/parse";
-import { analyze, type AnalysisResult, type Severity } from "@/lib/analyze";
+import {
+  analyze,
+  worstSeverity,
+  CATEGORIES,
+  type AnalysisResult,
+  type Finding,
+  type Severity,
+} from "@/lib/analyze";
 import { healthySample, problemSample } from "@/lib/samples";
 
 const SEV_LABEL: Record<Severity, string> = {
@@ -11,6 +18,13 @@ const SEV_LABEL: Record<Severity, string> = {
   good: "GOOD",
   info: "FYI",
 };
+const STATUS_LABEL: Record<Severity, string> = {
+  critical: "Needs attention",
+  warn: "Check",
+  good: "Healthy",
+  info: "Info",
+};
+const SEV_RANK: Record<Severity, number> = { critical: 0, warn: 1, good: 2, info: 3 };
 
 function ScoreGauge({ score, grade, level }: { score: number; grade: string; level: string }) {
   const r = 42;
@@ -43,19 +57,76 @@ function ScoreGauge({ score, grade, level }: { score: number; grade: string; lev
   );
 }
 
+function CategoryCard({
+  icon,
+  title,
+  findings,
+  evidence,
+}: {
+  icon: string;
+  title: string;
+  findings: Finding[];
+  evidence: { label: string; value: string }[];
+}) {
+  const worst = worstSeverity(findings);
+  const openByDefault = worst === "critical" || worst === "warn";
+  return (
+    <details className="catcard result-in" open={openByDefault}>
+      <summary className="cathead">
+        <span className="cat-ic">{icon}</span>
+        <span className="cat-title">{title}</span>
+        <span className={`tag ${worst}`}>{STATUS_LABEL[worst]}</span>
+        <span className="chev" aria-hidden>›</span>
+      </summary>
+      <div className="catbody">
+        {findings.map((f, i) => (
+          <div className="finding" key={i}>
+            <span className={`tag ${f.severity}`}>{SEV_LABEL[f.severity]}</span>
+            <span>{f.text}</span>
+          </div>
+        ))}
+        {evidence.length > 0 && (
+          <div className="evidence">
+            <div className="evidence-title">Evidence from the report</div>
+            {evidence.map((e) => (
+              <div className="ev-row" key={e.label}>
+                <span className="k">{e.label}</span>
+                <span className="v">{e.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function maskSerial(s: string): string {
+  if (!s || s.length < 4 || s === "Unknown") return s;
+  return s.slice(0, 3) + "•".repeat(Math.max(4, s.length - 3));
+}
+
 export default function ReportPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isSample, setIsSample] = useState(false);
+  const [redact, setRedact] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const loadSample = (which: "good" | "bad") => {
+  const loadSample = useCallback((which: "good" | "bad") => {
     setError(null);
     setIsSample(true);
     setResult(analyze(which === "good" ? healthySample : problemSample));
-    if (typeof window !== "undefined") window.scrollTo({ top: 260, behavior: "smooth" });
-  };
+    if (typeof window !== "undefined") window.scrollTo({ top: 240, behavior: "smooth" });
+  }, []);
+
+  // Support deep-links like /report/?demo=good so the landing page can show a
+  // populated dashboard in one click.
+  useEffect(() => {
+    const demo = new URLSearchParams(window.location.search).get("demo");
+    if (demo === "good" || demo === "bad") loadSample(demo);
+  }, [loadSample]);
 
   const handleFile = useCallback(async (file: File) => {
     setError(null);
@@ -79,7 +150,12 @@ export default function ReportPage() {
     [handleFile]
   );
 
-  const order: Severity[] = ["critical", "warn", "good", "info"];
+  // Category cards ordered worst-first so problems surface at the top.
+  const orderedCats = result
+    ? CATEGORIES.map((cat) => ({ ...cat, findings: result.byCategory[cat.key] || [] }))
+        .filter((cat) => cat.findings.length > 0)
+        .sort((a, b) => SEV_RANK[worstSeverity(a.findings)] - SEV_RANK[worstSeverity(b.findings)])
+    : [];
 
   return (
     <main>
@@ -133,6 +209,7 @@ export default function ReportPage() {
               📋 This is a <b>demo report</b> with made-up data — just to show what the results look like.
             </p>
           )}
+
           <div className={`verdict result-in ${result.verdict.level}`} style={{ marginTop: 20 }}>
             <ScoreGauge score={result.score} grade={result.grade} level={result.verdict.level} />
             <div>
@@ -150,29 +227,26 @@ export default function ReportPage() {
               <span>{result.machine.chip}</span>
               <span>{result.machine.ram}</span>
               <span>{result.machine.os}</span>
-              <span className="note">Serial {result.machine.serial}</span>
+              <span className="note">
+                Serial {redact ? maskSerial(result.machine.serial) : result.machine.serial}
+              </span>
+              <label className="redact" title="Hide identifiers before sharing a screenshot">
+                <input type="checkbox" checked={redact} onChange={(e) => setRedact(e.target.checked)} />
+                Redact for sharing
+              </label>
             </div>
           </div>
 
-          <div className="card findings result-in">
-            {order.map((sev) =>
-              result.groups[sev].length ? (
-                <div key={sev}>
-                  <h3>
-                    {sev === "critical" && "🚫 Deal-breakers"}
-                    {sev === "warn" && "⚠️ Things to check or negotiate on"}
-                    {sev === "good" && "✅ Looks good"}
-                    {sev === "info" && "ℹ️ Good to know"}
-                  </h3>
-                  {result.groups[sev].map((f, i) => (
-                    <div className="finding" key={i}>
-                      <span className={`tag ${sev}`}>{SEV_LABEL[sev]}</span>
-                      <span>{f.text}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : null
-            )}
+          <div className="catgrid">
+            {orderedCats.map((cat) => (
+              <CategoryCard
+                key={cat.key}
+                icon={cat.icon}
+                title={cat.title}
+                findings={cat.findings}
+                evidence={result.evidence[cat.key] || []}
+              />
+            ))}
           </div>
 
           <div className="card result-in">
@@ -185,7 +259,7 @@ export default function ReportPage() {
           </div>
 
           <p className="note" style={{ textAlign: "center" }}>
-            <button className="btn secondary" onClick={() => { setResult(null); setError(null); }}>
+            <button className="btn secondary" onClick={() => { setResult(null); setError(null); setIsSample(false); }}>
               Analyze another report
             </button>
           </p>

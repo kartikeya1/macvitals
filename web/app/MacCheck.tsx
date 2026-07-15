@@ -66,7 +66,7 @@ export default function MacCheck() {
           sample report.
         </span>
       </div>
-      <a className="btn small secondary" href="/report/">See a sample →</a>
+      <a className="btn small secondary" href="/report/?demo=good">See a sample →</a>
     </div>
   );
 }

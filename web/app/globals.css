@@ -281,7 +281,44 @@ h1, h2, h3 { letter-spacing: -0.02em; }
 
 .machine { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--muted); font-size: 0.92rem; align-items: center; }
 .machine b { color: var(--text); }
-.machine .redact { margin-left: auto; }
+.machine .redact {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.85rem; color: var(--muted); cursor: pointer; user-select: none;
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px;
+}
+.machine .redact:hover { border-color: var(--border-strong); color: var(--text); }
+.machine .redact input { accent-color: var(--accent); cursor: pointer; }
+
+/* ---------- category cards (Phase 3) ---------- */
+.catgrid { display: grid; gap: 12px; margin: 20px 0; }
+.catcard {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.cathead {
+  display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.cathead::-webkit-details-marker { display: none; }
+.cathead:hover { background: var(--panel-2); }
+.cat-ic {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--panel-2);
+  display: flex; align-items: center; justify-content: center; font-size: 17px; flex: 0 0 auto;
+}
+.cat-title { font-weight: 650; flex: 1; }
+.cathead .tag { margin-left: auto; }
+.chev { color: var(--muted); font-size: 1.3rem; transition: transform .2s ease; flex: 0 0 auto; }
+details[open] .chev { transform: rotate(90deg); }
+.catbody { padding: 4px 20px 18px; animation: fade .35s ease both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.catbody .finding:first-of-type { border-top: 1px solid var(--border); padding-top: 12px; }
+
+.evidence { margin-top: 14px; padding: 14px 16px; background: var(--panel-2); border-radius: var(--radius-sm); }
+.evidence-title { font-size: 0.72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.ev-row { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; font-size: 0.9rem; border-top: 1px solid var(--border); }
+.ev-row:first-of-type { border-top: none; }
+.ev-row .k { color: var(--muted); }
+.ev-row .v { font-weight: 650; font-family: var(--mono); font-size: 0.85rem; text-align: right; }
 
 .findings h3 { margin: 22px 0 8px; font-size: 1.02rem; }
 .findings h3:first-child { margin-top: 0; }
