@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseReportFile } from "@/lib/parse";
 import { analyze, type AnalysisResult, type Severity } from "@/lib/analyze";
 import { healthySample, problemSample } from "@/lib/samples";
@@ -15,13 +15,22 @@ const SEV_LABEL: Record<Severity, string> = {
 function ScoreGauge({ score, grade, level }: { score: number; grade: string; level: string }) {
   const r = 42;
   const c = 2 * Math.PI * r;
-  const offset = c * (1 - score / 100);
+  const target = c * (1 - score / 100);
   const color = level === "critical" ? "var(--crit)" : level === "warn" ? "var(--warn)" : "var(--ok)";
+
+  // Start empty, then animate to the target so the arc "fills" on reveal.
+  const [offset, setOffset] = useState(c);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setOffset(target));
+    return () => cancelAnimationFrame(id);
+  }, [target, c]);
+
   return (
     <div className="gauge" aria-label={`Health score ${score} of 100`}>
       <svg width="96" height="96" viewBox="0 0 96 96">
         <circle cx="48" cy="48" r={r} fill="none" stroke="var(--border)" strokeWidth="8" />
         <circle
+          className="arc"
           cx="48" cy="48" r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={offset}
         />
@@ -124,7 +133,7 @@ export default function ReportPage() {
               📋 This is a <b>demo report</b> with made-up data — just to show what the results look like.
             </p>
           )}
-          <div className={`verdict ${result.verdict.level}`} style={{ marginTop: 20 }}>
+          <div className={`verdict result-in ${result.verdict.level}`} style={{ marginTop: 20 }}>
             <ScoreGauge score={result.score} grade={result.grade} level={result.verdict.level} />
             <div>
               <div className="label">{result.verdict.label}</div>
@@ -135,7 +144,7 @@ export default function ReportPage() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card result-in">
             <div className="machine">
               <span><b>{result.machine.model}</b></span>
               <span>{result.machine.chip}</span>
@@ -145,7 +154,7 @@ export default function ReportPage() {
             </div>
           </div>
 
-          <div className="card findings">
+          <div className="card findings result-in">
             {order.map((sev) =>
               result.groups[sev].length ? (
                 <div key={sev}>
@@ -166,7 +175,7 @@ export default function ReportPage() {
             )}
           </div>
 
-          <div className="card">
+          <div className="card result-in">
             <h3 style={{ marginTop: 0 }}>What to do next</h3>
             <ol className="next">
               {result.nextSteps.map((s, i) => (

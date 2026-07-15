@@ -37,7 +37,7 @@ export default function Home() {
 
       <MacCheck />
 
-      <section className="steps">
+      <section className="steps" data-reveal>
         <div className="step">
           <div className="n">1</div>
           <h3>Get the collector</h3>
@@ -55,12 +55,12 @@ export default function Home() {
         </div>
       </section>
 
-      <h2 className="section-title">What it checks</h2>
-      <p className="section-sub">
+      <h2 className="section-title" data-reveal>What it checks</h2>
+      <p className="section-sub" data-reveal>
         Eleven categories of read-only diagnostics, each turned into a clear finding with a buy /
         don&apos;t-buy verdict and a 0–100 score.
       </p>
-      <div className="features">
+      <div className="features" data-reveal>
         {CHECKS.map((c) => (
           <div className="feature" key={c.title}>
             <div className="ic">{c.ic}</div>
@@ -70,7 +70,7 @@ export default function Home() {
         ))}
       </div>
 
-      <section id="get" className="card" style={{ marginTop: 34 }}>
+      <section id="get" className="card" style={{ marginTop: 34 }} data-reveal>
         <h2>Get the collector</h2>
         <p className="note" style={{ marginTop: 0 }}>
           Paste this into <b>Terminal</b> on the Mac you want to check. It downloads the open-source
@@ -89,7 +89,7 @@ export default function Home() {
         </p>
       </section>
 
-      <div className="privacy">
+      <div className="privacy" data-reveal>
         <div className="ico">🔒</div>
         <div>
           <b>Your data never leaves your device.</b>

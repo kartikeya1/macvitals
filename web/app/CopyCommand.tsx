@@ -17,7 +17,9 @@ export default function CopyCommand({ command }: { command: string }) {
 
   return (
     <div className="cmd">
-      <code>{command}</code>
+      <div className="cmd-scroll">
+        <code>{command}</code>
+      </div>
       <button className="copybtn" onClick={copy}>
         {copied ? "Copied ✓" : "Copy"}
       </button>
