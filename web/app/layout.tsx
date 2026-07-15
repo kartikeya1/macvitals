@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/" style={{ textDecoration: "none", color: "inherit" }}>
               <span className="brand">
                 <span className="logo">✦</span>
-                Mac<span className="dot">Vitals</span>
+                <span className="brand-name">Mac<span className="dot">Vitals</span></span>
               </span>
             </a>
             <div className="nav-right">

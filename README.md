@@ -1,45 +1,94 @@
-# 🩺 MacVitals
+<p align="center">
+  <img src="logo.svg" alt="MacVitals" width="320" />
+</p>
 
-![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)
-![Apple Silicon + Intel](https://img.shields.io/badge/Apple%20Silicon%20%2B%20Intel-supported-brightgreen)
-![Shell: bash](https://img.shields.io/badge/shell-bash-4EAA25?logo=gnubash&logoColor=white)
-![Read-only](https://img.shields.io/badge/mode-read--only-blue)
-![Dependencies: none](https://img.shields.io/badge/dependencies-none-success)
-![License: MIT](https://img.shields.io/badge/license-MIT-yellow)
+<p align="center">
+  <a href="https://macvitals.vercel.app"><b>macvitals.vercel.app</b></a> ·
+  Check any Mac's health in plain English.
+</p>
 
-**A single, dependency-free, strictly read-only script that generates a complete diagnostic report for any Mac — then explains, in plain English, whether the machine is worth buying.**
-
-You're about to hand over cash for a second-hand Mac. The seller says "it's perfect." This tool lets you (or an AI assistant) *verify that* — SSD health, battery wear, hidden enterprise management, kernel panics, thermal throttling, activation lock — in one command, without changing a single setting on the machine.
-
-```bash
-bash macvitals.sh
-```
-
-That's it. You get a folder of clean, topic-separated reports plus a machine-readable `summary.json`, **and a plain-English verdict printed right in your terminal** — no technical knowledge needed. Want a second opinion? The whole thing zips up ready to drop into ChatGPT/Claude with *"should I buy this?"*
-
-```
-  OVERALL VERDICT:  [ X ]  DO NOT BUY YET — serious issues must be resolved first
-  Indicative health score: 60/100  (Fair)
-
-  [ X ]  DEAL-BREAKERS — resolve these BEFORE handing over money:
-     * The Mac is still enrolled in a company's device-management (MDM) system...
-  [ OK ]  LOOKS GOOD:
-     * SSD self-check (SMART) reports "Verified" — the drive is not reporting failures.
-     * Activation Lock is OFF — you will be able to set the Mac up as your own.
-```
+<p align="center">
+  <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-black?logo=apple" />
+  <img alt="Apple Silicon + Intel" src="https://img.shields.io/badge/Apple%20Silicon%20%2B%20Intel-supported-brightgreen" />
+  <img alt="Shell: bash" src="https://img.shields.io/badge/shell-bash-4EAA25?logo=gnubash&logoColor=white" />
+  <img alt="Web: Next.js" src="https://img.shields.io/badge/web-Next.js%20(static)-black?logo=nextdotjs" />
+  <img alt="Read-only" src="https://img.shields.io/badge/mode-read--only-blue" />
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-yellow" />
+</p>
 
 ---
 
-## Why it exists
+**MacVitals** is a two-part tool for judging a Mac's health — perfect for vetting a used MacBook before you buy, or checking your own:
 
-Most "Mac health check" advice is a checklist of things to click through manually in System Settings, or a paid app that wants Full Disk Access. Neither is great when you're standing next to a stranger's laptop for ten minutes deciding whether to buy it.
+1. A **read-only shell script** that inspects the machine (battery, SSD, security, thermal, logs…) and writes a shareable report.
+2. A **fully client-side web dashboard** that turns that report into a plain-English buy / don't-buy verdict with a 0–100 score — **analyzed entirely in your browser; nothing is ever uploaded.**
 
-This script is:
+> The report contains your serial number, hardware IDs and network addresses. MacVitals has **no backend** — the web app parses and scores everything locally, so that data never leaves your device.
 
-- **Read-only.** It never writes anywhere except its own output folder. No settings touched, nothing installed. Safe to run on a machine you don't own yet.
-- **Zero-dependency.** No Homebrew, no `jq`, no Python. Only stock macOS utilities. It runs on a fresh, offline machine.
-- **Honest.** If a value can't be read, the report says `null` or `[skipped]`. It never guesses or fabricates a reading.
-- **AI-ready.** The output is structured so another model can reason over it and answer *"buy / don't buy, and why."*
+---
+
+## Table of contents
+
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [What it checks](#what-it-checks)
+- [Repository layout](#repository-layout)
+- [Local development](#local-development)
+- [Deployment (Vercel)](#deployment-vercel)
+- [Adding a new check / feature](#adding-a-new-check--feature)
+- [Roadmap — done & pending](#roadmap--done--pending)
+- [Privacy & safety guarantees](#privacy--safety-guarantees)
+- [Contributing](#contributing)
+- [Maintaining this README](#maintaining-this-readme)
+- [License](#license)
+
+---
+
+## Quick start
+
+### As a user (the website way)
+
+1. Go to **[macvitals.vercel.app](https://macvitals.vercel.app)** and copy the one-line command (pick where to save the report — Desktop / Downloads).
+2. Paste it into **Terminal** on the Mac you want to check:
+   ```bash
+   curl -fsSL https://macvitals.vercel.app/macvitals.sh -o macvitals.sh && bash macvitals.sh ~/Desktop
+   ```
+3. When it finishes, it prints where the report + `.zip` were saved.
+4. Back on the site, open **Analyze a report** and drop the `.zip` (or `summary.json`) on the page for your verdict.
+
+### From a clone (get the terminal verdict too)
+
+If you keep both scripts together, the collector auto-runs the analyzer and prints the verdict right in the terminal:
+
+```bash
+git clone https://github.com/kartikeya1/macvitals
+cd macvitals
+bash macvitals.sh                 # report saved in the current folder
+bash macvitals.sh ~/Desktop       # …or choose where
+bash macvitals.sh --with-sudo     # optional deep scan (asks for your password)
+```
+
+> **macOS only** (Apple Silicon or Intel). Running via `bash` avoids the "unidentified developer" Gatekeeper prompt on a downloaded file.
+
+---
+
+## How it works
+
+A browser **cannot** read Mac hardware (macOS sandboxes it), so there is always a local collection step. Everything around it is designed to be effortless and private:
+
+```
+  1. GET THE COLLECTOR        2. RUN IT LOCALLY (once)      3. VIEW THE DASHBOARD
+  site → copy one command  →  Terminal: bash macvitals  →  drag the report onto
+  (or download the script)    → MacVitals_Report_…/.zip     the site → visual verdict
+                                                            (parsed 100% in-browser)
+```
+
+The scoring logic lives in **one** place — [`shared/ruleset.json`](shared/ruleset.json):
+
+- The **CLI analyzer** (`macvitals-analyze.sh`) loads it at runtime (with identical built-in fallbacks so the two `.sh` files still run standalone).
+- The **web app** imports it (`web/lib/analyze.ts`).
+
+So the terminal verdict and the browser verdict are always identical.
 
 ---
 
@@ -47,161 +96,135 @@ This script is:
 
 | Area | Highlights |
 |------|-----------|
-| 🔩 **Hardware** | Model, chip, serial, board ID, firmware/Boot ROM, hardware UUID |
-| 🔋 **Battery** | Cycle count, max capacity, condition, **raw health computed from hardware registers** (cross-checked against the reported %), temperature, voltage |
-| 💾 **Storage** | SSD model, **SMART status**, TRIM, APFS layout, capacity, disk usage |
-| 🖥️ **Display** | Resolution, refresh, color profile, EDID markers, external-display history |
+| 🔋 **Battery** | Cycle count, max capacity, condition, raw health from hardware registers, temperature |
+| 💾 **Storage / SSD** | **SMART** status, TRIM, APFS layout, capacity, disk usage |
+| 🔐 **Security & ownership** | **Activation Lock**, **MDM enrollment**, configuration profiles, FileVault, SIP, Gatekeeper |
 | 🌡️ **Thermal** | CPU speed-limit / thermal pressure, battery temp (+ `powermetrics` with `--with-sudo`) |
-| 🧠 **Memory** | RAM config, VM stats, swap, memory pressure |
-| 📡 **Connectivity** | Wi-Fi / Bluetooth / Thunderbolt / USB controllers, interfaces, MACs |
-| 🔌 **Ports** | Thunderbolt/USB-C/card-reader enumeration |
-| 🎥 **Camera & Audio** | Device presence and identifiers |
-| 🔐 **Security** | SIP, FileVault, Gatekeeper, **Activation Lock**, **MDM enrollment & configuration profiles** |
 | 📜 **Stability** | Kernel panics, abnormal shutdown causes, wake/sleep history, top processes |
+| 🔩 **Hardware** | Model, chip, cores, firmware / Boot ROM, serial, hardware UUIDs |
+| 🧠 **Memory** | RAM, swap, memory pressure |
+| 📡 **Connectivity** | Wi-Fi, Bluetooth, Thunderbolt, USB, ports, network interfaces |
+| 🎥 **Camera & audio** | Device presence and identifiers |
 
-> 🚩 The **security section is the killer feature for used purchases**: it surfaces leftover MDM enrollment, the MDM server URL, and any installed configuration profiles — the enterprise-management remnants that a "wiped" office laptop often still carries and that can brick your ownership later.
+> 🚩 The **security section is the killer feature for used purchases**: it surfaces leftover MDM enrollment, the MDM server URL, and installed configuration profiles — the enterprise-management remnants a "wiped" office laptop often still carries and that can compromise your ownership later.
 
 ---
 
-## Quick start
+## Repository layout
 
-The project is **two scripts**. Keep them in the same folder:
+```
+macvitals/
+├── macvitals.sh              # read-only collector (auto-runs the analyzer if present)
+├── macvitals-analyze.sh      # plain-English verdict + 0–100 score (reads shared/ruleset.json)
+├── shared/
+│   ├── ruleset.json          # SINGLE SOURCE OF TRUTH for scoring (CLI + web)
+│   └── README.md             # the ruleset schema + how to edit it
+├── web/                      # static Next.js site (Vercel)
+│   ├── app/                  # landing (page.tsx), report dashboard (report/page.tsx), components
+│   ├── lib/                  # analyze.ts, parse.ts, samples.ts, site.ts
+│   ├── scripts/sync-assets.mjs   # copies the .sh files + ruleset into web/ at build
+│   └── README.md             # web-specific dev/deploy notes
+├── docs/
+│   └── WEB_APP_PLAN.md       # product & technical plan + phase roadmap
+├── logo.svg                  # brand mark
+├── vercel.json               # tells Vercel to build web/ and serve web/out
+└── LICENSE
+```
 
-| Script | Job |
-|--------|-----|
-| `macvitals.sh` | Collects the raw diagnostics (read-only) |
-| `macvitals-analyze.sh` | Turns that data into a plain-English buy/don't-buy verdict |
+---
+
+## Local development
+
+### CLI
 
 ```bash
-# 1. Copy BOTH scripts onto the Mac you want to inspect (AirDrop / USB).
-# 2. Run the inspector — it auto-runs the analyzer at the end:
-bash macvitals.sh
+bash macvitals.sh /tmp                       # run, output to /tmp
+bash macvitals-analyze.sh /tmp/MacVitals_Report_*   # re-analyze an existing report
 ```
 
-You'll see the report location **and** the plain-English health assessment. Done.
+### Web
 
 ```bash
-# Optional: choose where the report is written
-bash macvitals.sh ~/Desktop
-
-# Optional: collect extra elevated (still read-only) diagnostics
-bash macvitals.sh --with-sudo
+cd web
+npm install
+npm run dev        # http://localhost:3000  (runs sync-assets first)
+npm run build      # static export to web/out
 ```
 
-### Re-analyze an existing report (no re-scan needed)
-
-Already have a report folder (or someone sent you one)? Get the verdict without re-running the scan:
-
-```bash
-bash macvitals-analyze.sh                       # newest report in this folder
-bash macvitals-analyze.sh MacVitals_Report_2026…  # a specific report
-```
-
-The verdict is also saved to `HEALTH_ANALYSIS.txt` inside the report folder, so it travels with the `.zip`.
-
-> **How the verdict works:** it's a transparent, rule-based heuristic — SSD SMART status, leftover enterprise management (MDM/profiles), Activation Lock, kernel panics, thermal throttling and battery wear each map to a clearly-labelled finding. Nothing is a black box; every conclusion cites a value from the report.
-
-### Sample `summary.json`
-
-```json
-{
-  "hardware": { "model_name": "MacBook Pro", "chip": "Apple M1 Pro", "serial_number": "…" },
-  "battery":  { "cycle_count": "234", "maximum_capacity_percent": "85%", "condition": "Good" },
-  "storage":  { "ssd_model": "APPLE SSD AP0512R", "smart_status": "Verified", "trim_support": "Yes" },
-  "security": { "activation_lock": "activation_lock_disabled", "configuration_profile_count": 0 }
-}
-```
-
-Hand that (or the whole `.zip`) to an AI assistant and ask for a verdict.
+> ⚠️ **Never run `npm run build` while `next dev` is running** — it clobbers the shared `.next` dir and the dev server then serves empty CSS. Stop dev first, `rm -rf .next`, then build.
 
 ---
 
-## Compatibility
+## Deployment (Vercel)
 
-| Platform | Supported | Notes |
-|----------|:---------:|-------|
-| Apple Silicon Mac (M1/M2/M3/M4) | ✅ | Primary target — every section works |
-| Intel Mac | ✅ | Apple-Silicon-only fields self-skip with a clear note; T2 info replaces the iBridge section |
-| Windows / Linux | ❌ | Refuses to run (guarded via `uname`) — every tool it uses is macOS-only |
+The repo root [`vercel.json`](vercel.json) makes Vercel build the app in `web/` and serve the static export from `web/out`, so you can import the repo **with the Root Directory left at the repo root**:
 
-**It is generic, not tied to any one machine** — it reports whatever Mac it runs on, so run it *on the machine you're evaluating*.
+1. Vercel → **New Project** → import `kartikeya1/macvitals`.
+2. Leave **Root Directory** as the repo root (the `vercel.json` handles the `web/` subdir). Framework preset: **Other**.
+3. Deploy.
+4. If your domain differs from `macvitals.vercel.app`, update `SITE_ORIGIN` in [`web/lib/site.ts`](web/lib/site.ts) and redeploy — it's used in the copy-paste command.
 
-> **Gatekeeper tip:** if you download the script from the internet, macOS may quarantine it. Running it as `bash macvitals.sh` (rather than double-clicking) avoids the "unidentified developer" prompt.
-
----
-
-## Safety guarantees
-
-- ✅ Read-only — writes only inside its timestamped output folder
-- ✅ No network access required
-- ✅ No software installed, no settings modified
-- ✅ Core report needs **no `sudo`**; the elevated section is opt-in and still read-only
-- ✅ Every unavailable command degrades gracefully — a missing tool is a note, never a crash
+The collector script is served at `/{macvitals.sh}` (synced into `web/public` at build), which is what the one-line `curl` command fetches.
 
 ---
 
-## Output layout
+## Adding a new check / feature
 
-```
-MacVitals_Report_<timestamp>/
-├── HEALTH_ANALYSIS.txt # plain-English verdict (from the analyzer)
-├── summary.json        # curated, machine-readable snapshot
-├── hardware.txt
-├── battery.txt
-├── storage.txt
-├── display.txt
-├── thermal.txt
-├── memory.txt
-├── network.txt
-├── ports.txt
-├── camera_audio.txt
-├── security.txt
-├── software.txt
-├── system.txt          # panics / shutdowns / wake history / top processes
-├── diagnostics.txt     # how to run Apple Diagnostics manually
-├── README.txt          # what to scrutinize for a buy decision
-└── raw/                # raw system_profiler JSON dumps
-MacVitals_Report_<timestamp>.zip
-```
+**To add a new health check end-to-end:**
+
+1. **Collect the raw data** — add a `record` line to the relevant `sec_*` function in [`macvitals.sh`](macvitals.sh) (and, if it's a key indicator, extract it into `summary.json` inside `build_summary`).
+2. **Define the rule** — add the threshold/deduction/message to [`shared/ruleset.json`](shared/ruleset.json) (see [`shared/README.md`](shared/README.md) for the schema).
+3. **Score it** in both front-ends:
+   - CLI: add the branch to `macvitals-analyze.sh` (read tunables via `rget`).
+   - Web: add the branch to `web/lib/analyze.ts` (reads the same ruleset) and, if it needs a raw value, to `web/lib/parse.ts`.
+4. **Show it** — the web dashboard groups findings by category automatically; add the category to `ruleset.categories` if it's new.
+5. **Test**: `bash macvitals.sh /tmp && bash macvitals-analyze.sh /tmp/MacVitals_Report_*`, then `cd web && npm run build`, and drop a report on the local site.
+
+**Invariants any change must preserve:** read-only · zero-dependency (stock macOS tools only) · no fabricated values (missing → `null`/`[skipped]`) · graceful degradation.
 
 ---
 
-## Notes & limitations
+## Roadmap — done & pending
 
-- **Fan RPM and per-sensor SMC temperatures** require third-party tools (e.g. `iStats`) and are intentionally *not* installed — the script stays dependency-free. `--with-sudo` adds `powermetrics`-based thermal sampling instead.
-- **Apple Diagnostics** (the built-in hardware self-test) can't be triggered by a script and is deliberately not automated; `diagnostics.txt` explains how to run it by hand.
-- This tool reports data. The *decision* is yours (or your AI's) — it doesn't pretend to give a verdict itself.
+**Done ✅**
+- **Phase 0** — read-only CLI collector + plain-English analyzer.
+- **Phase 1** — shared `ruleset.json` consumed by both CLI and web (one source of truth).
+- **Phase 2** — static Next.js site: landing, "get the collector", in-browser report parsing + verdict.
+- **Phase 3** — dashboard polish: per-category cards with raw-evidence drill-down, redact-for-sharing toggle, demo deep-links (`?demo=good|bad`), animations, light/dark themes.
+
+**Pending / next ⏭**
+- **Phase 4** — export a self-contained HTML report + PDF + "copy for AI" from the dashboard.
+- **Phase 5** — mobile polish, richer empty/error states.
+- **Deferred** — notarized one-click `.pkg`/`.app` collector (removes the Terminal step); optional opt-in cloud history (would introduce a backend + privacy policy).
+
+**Known limitations**
+- Fan RPM / per-sensor SMC temps need third-party tools and are intentionally not bundled (use `--with-sudo` for `powermetrics`).
+- Apple Diagnostics can't be scripted; `diagnostics.txt` explains how to run it by hand.
 
 ---
 
-## Web version (planned)
+## Privacy & safety guarantees
 
-A hosted, fully client-side dashboard is planned: get the collector with one copy-paste, run it locally, then drag the report onto the site for a visual health verdict — **with nothing ever uploaded** (the report is parsed entirely in your browser). Free static hosting on Vercel, no backend. See the full product + technical plan in [docs/WEB_APP_PLAN.md](docs/WEB_APP_PLAN.md).
+- ✅ **Read-only** — the script writes only inside its own timestamped report folder; it changes no settings and installs nothing.
+- ✅ **No upload** — the web app has no backend; your report is parsed and scored in your browser.
+- ✅ **No sudo** for the core report; the elevated section is opt-in (`--with-sudo`) and still read-only.
+- ✅ **No fabricated values** — anything unreadable is reported as `null` / `[skipped]`, never guessed.
+- ✅ **Redact-for-sharing** toggle masks the serial number before you screenshot a verdict.
 
-## Recording a demo for the repo
-
-A terminal recording sells a CLI tool better than any screenshot. To capture one with [asciinema](https://asciinema.org):
-
-```bash
-# install once (Homebrew), then record a run:
-brew install asciinema
-asciinema rec demo.cast -c "bash macvitals.sh /tmp"
-# upload and embed the resulting badge/link in this README:
-asciinema upload demo.cast
-```
-
-Prefer a static image? Take a screenshot of the final "HEALTH ASSESSMENT" block (⌘⇧4) and drop it in a `docs/` folder, then reference it here:
-
-```markdown
-![Sample verdict](docs/sample-verdict.png)
-```
-
-> Redact your serial number and UUIDs before publishing any recording or screenshot.
+---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The one hard rule: every change must keep the tool **read-only, dependency-free, and honest** (no fabricated values).
+See [CONTRIBUTING.md](CONTRIBUTING.md). The one hard rule: every change keeps the tool **read-only, dependency-free, and honest**. PRs that add checks should touch `shared/ruleset.json` (not hard-code logic in two places).
+
+---
+
+## Maintaining this README
+
+This README is the canonical entry point — **keep it current**. When you change behavior, update the matching section here in the same PR: the **Roadmap** (move items between done/pending), **What it checks** (new checks), **Repository layout** (new files), and **Deployment** (if the build/hosting changes). A feature isn't "done" until the README reflects it.
+
+---
 
 ## License
 
-[MIT](LICENSE) — do whatever you like. No warranty; you run it at your own discretion.
+[MIT](LICENSE) — do what you like. No warranty; you run it at your own discretion.

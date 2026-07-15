@@ -1,6 +1,5 @@
-import CopyCommand from "./CopyCommand";
 import MacCheck from "./MacCheck";
-import { SITE_ORIGIN, GITHUB_URL, COLLECTOR_FILENAME } from "@/lib/site";
+import GetCollector from "./GetCollector";
 
 const CHECKS = [
   { ic: "🔋", title: "Battery", desc: "Cycle count, maximum capacity, condition and wear — plus a raw health figure from the hardware registers." },
@@ -15,8 +14,6 @@ const CHECKS = [
 ];
 
 export default function Home() {
-  const oneLiner = `curl -fsSL ${SITE_ORIGIN}/${COLLECTOR_FILENAME} -o macvitals.sh && bash macvitals.sh`;
-
   return (
     <main>
       <section className="hero">
@@ -70,24 +67,7 @@ export default function Home() {
         ))}
       </div>
 
-      <section id="get" className="card" style={{ marginTop: 34 }} data-reveal>
-        <h2>Get the collector</h2>
-        <p className="note" style={{ marginTop: 0 }}>
-          Paste this into <b>Terminal</b> on the Mac you want to check. It downloads the open-source
-          script and runs it locally:
-        </p>
-        <CopyCommand command={oneLiner} />
-        <p className="note" style={{ marginTop: 14 }}>
-          Prefer not to use <code>curl</code>?{" "}
-          <a href={`/${COLLECTOR_FILENAME}`} download>Download {COLLECTOR_FILENAME}</a> and run{" "}
-          <code>bash {COLLECTOR_FILENAME}</code>. ·{" "}
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer">View source on GitHub</a>
-        </p>
-        <p className="note">
-          <b>macOS only</b> (Apple Silicon or Intel). Running via <code>bash</code> avoids the
-          &ldquo;unidentified developer&rdquo; Gatekeeper prompt on a freshly downloaded file.
-        </p>
-      </section>
+      <GetCollector />
 
       <div className="privacy" data-reveal>
         <div className="ico">🔒</div>
