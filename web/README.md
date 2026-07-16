@@ -24,13 +24,17 @@ npm run build    # outputs static site to web/out/
 
 ## Deploy to Vercel
 
+The repo-root [`../vercel.json`](../vercel.json) builds this `web/` app and serves
+`web/out`, so Vercel is configured from the **repo root** — not this subdirectory.
+
 1. Push the repo to GitHub.
 2. In Vercel, **New Project → import the repo**.
-3. Set **Root Directory** to `web`. Framework preset: **Next.js** (auto-detected).
-4. Deploy. (Output is a static export; no server functions, no env vars.)
-5. After the first deploy, set your domain in [`lib/site.ts`](lib/site.ts)
-   (`SITE_ORIGIN` and `GITHUB_URL`) so the copy-paste command points at your host,
-   and redeploy.
+3. Leave **Root Directory** at the **repo root** (the `vercel.json` handles the
+   `web/` subdir). Framework preset: **Other**.
+4. Deploy. (Static export — no server functions, no env vars.)
+5. If your domain isn't `macvitals.vercel.app`, update `SITE_ORIGIN` (and
+   `GITHUB_URL`) in [`lib/site.ts`](lib/site.ts) so the copy-paste command points
+   at your host, then redeploy.
 
 ## Structure
 
