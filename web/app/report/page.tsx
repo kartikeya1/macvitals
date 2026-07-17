@@ -116,6 +116,7 @@ export default function ReportPage() {
   const [isSample, setIsSample] = useState(false);
   const [redact, setRedact] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onDownloadHtml = () => {
@@ -156,12 +157,15 @@ export default function ReportPage() {
   const handleFile = useCallback(async (file: File) => {
     setError(null);
     setIsSample(false);
+    setLoading(true);
     try {
       const input = await parseReportFile(file);
       setResult(analyze(input));
     } catch (e) {
       setResult(null);
       setError(e instanceof Error ? e.message : "Could not read that file.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -201,17 +205,35 @@ export default function ReportPage() {
       </div>
 
       <div
-        className={"dropzone" + (dragging ? " drag" : "")}
+        className={"dropzone" + (dragging ? " drag" : "") + (loading ? " busy" : "")}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !loading && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !loading) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         role="button"
         tabIndex={0}
+        aria-label="Drop a report file, or press Enter to choose one"
+        aria-busy={loading}
       >
-        <div style={{ fontSize: "2rem" }}>📄</div>
-        <h3>Drop your report here</h3>
-        <p>or click to choose a file (summary.json or .zip)</p>
+        {loading ? (
+          <>
+            <div className="spinner" aria-hidden />
+            <h3>Reading your report…</h3>
+            <p>Parsing and analyzing locally — this stays on your device.</p>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: "2rem" }}>📄</div>
+            <h3>Drop your report here</h3>
+            <p>or click to choose a file (summary.json or .zip)</p>
+          </>
+        )}
         <input
           ref={inputRef}
           type="file"
@@ -222,8 +244,10 @@ export default function ReportPage() {
       </div>
 
       {error && (
-        <div className="card" style={{ borderColor: "var(--crit)", color: "var(--crit)" }}>
-          {error}
+        <div className="errorbox" role="alert">
+          <span className="ico" aria-hidden>⚠️</span>
+          <span className="msg">{error}</span>
+          <button className="dismiss" aria-label="Dismiss" onClick={() => setError(null)}>✕</button>
         </div>
       )}
 
