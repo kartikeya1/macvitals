@@ -44,6 +44,8 @@
 set -u
 set -o pipefail
 
+MV_VERSION="1.0.0"
+
 # ----------------------------------------------------------------------------
 # 0. Argument parsing and environment
 # ----------------------------------------------------------------------------
@@ -54,6 +56,10 @@ BASE_DIR="$(pwd)"    # where the report folder will be created
 for arg in "$@"; do
   case "$arg" in
     --with-sudo) WITH_SUDO=1 ;;
+    -v|--version)
+      echo "MacVitals ${MV_VERSION}"
+      exit 0
+      ;;
     -h|--help)
       grep -E '^#( |$)' "$0" | sed -E 's/^# ?//'
       exit 0
@@ -94,7 +100,7 @@ SPIN=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 banner() {
   printf '\n'
   printf '   %s%s╱╲%s          %s%s╱╲%s\n'                  "$BOLD" "$CYAN" "$RESET" "$BOLD" "$CYAN" "$RESET"
-  printf '  %s%s╱  ╲────╱╲────╱  ╲───%s   %s%sMacVitals%s\n' "$BOLD" "$CYAN" "$RESET" "$BOLD" "$MAGENTA" "$RESET"
+  printf '  %s%s╱  ╲────╱╲────╱  ╲───%s   %s%sMacVitals%s %s v%s%s\n' "$BOLD" "$CYAN" "$RESET" "$BOLD" "$MAGENTA" "$RESET" "$DIM" "$MV_VERSION" "$RESET"
   printf '  %s%s        ╲╱%s            %sMac health, in plain English%s\n' "$BOLD" "$CYAN" "$RESET" "$DIM" "$RESET"
   printf '\n'
   printf '  %s●%s Private   %s●%s No changes   %s●%s Nothing installed   %s●%s ~1 minute\n' \

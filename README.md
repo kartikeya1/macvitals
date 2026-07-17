@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/kartikeya1/macvitals/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/kartikeya1/macvitals/actions/workflows/ci.yml/badge.svg" /></a>
   <img alt="Platform: macOS" src="https://img.shields.io/badge/platform-macOS-black?logo=apple" />
   <img alt="Apple Silicon + Intel" src="https://img.shields.io/badge/Apple%20Silicon%20%2B%20Intel-supported-brightgreen" />
   <img alt="Shell: bash" src="https://img.shields.io/badge/shell-bash-4EAA25?logo=gnubash&logoColor=white" />
@@ -17,6 +18,10 @@
 </p>
 
 ---
+
+<p align="center">
+  <img src="docs/social-preview.png" alt="MacVitals — is this Mac actually healthy?" width="640" />
+</p>
 
 **MacVitals** is a two-part tool for judging a Mac's health — perfect for vetting a used MacBook before you buy, or checking your own:
 
@@ -76,12 +81,7 @@ bash macvitals.sh --with-sudo     # optional deep scan (asks for your password)
 
 A browser **cannot** read Mac hardware (macOS sandboxes it), so there is always a local collection step. Everything around it is designed to be effortless and private:
 
-```
-  1. GET THE COLLECTOR        2. RUN IT LOCALLY (once)      3. VIEW THE DASHBOARD
-  site → copy one command  →  Terminal: bash macvitals  →  drag the report onto
-  (or download the script)    → MacVitals_Report_…/.zip     the site → visual verdict
-                                                            (parsed 100% in-browser)
-```
+<p align="center"><img src="docs/flow.svg" alt="1. Get the collector → 2. Run it locally → 3. See the verdict" width="800" /></p>
 
 The scoring logic lives in **one** place — [`shared/ruleset.json`](shared/ruleset.json):
 
@@ -120,14 +120,17 @@ macvitals/
 │   ├── ruleset.json          # SINGLE SOURCE OF TRUTH for scoring (CLI + web)
 │   └── README.md             # the ruleset schema + how to edit it
 ├── web/                      # static Next.js site (Vercel)
-│   ├── app/                  # landing (page.tsx), report dashboard (report/page.tsx), components
-│   ├── lib/                  # analyze.ts, parse.ts, samples.ts, site.ts
+│   ├── app/                  # landing, report dashboard, components, icon/OG images
+│   ├── lib/                  # analyze.ts, parse.ts, export.ts, samples.ts, site.ts
 │   ├── scripts/sync-assets.mjs   # copies the .sh files + ruleset into web/ at build
 │   └── README.md             # web-specific dev/deploy notes
-├── docs/
-│   └── WEB_APP_PLAN.md       # product & technical plan + phase roadmap
+├── scripts/
+│   └── check-ruleset-sync.mjs    # CI guard: ruleset ↔ CLI message parity
+├── docs/                     # WEB_APP_PLAN.md, flow.svg, social-preview.png
+├── .github/                  # CI workflow + issue/PR templates
 ├── logo.svg                  # brand mark
 ├── vercel.json               # tells Vercel to build web/ and serve web/out
+├── SECURITY.md · CHANGELOG.md · CODE_OF_CONDUCT.md · CONTRIBUTING.md
 └── LICENSE
 ```
 
@@ -192,9 +195,11 @@ The collector script is served at `/{macvitals.sh}` (synced into `web/public` at
 - **Phase 2** — static Next.js site: landing, "get the collector", in-browser report parsing + verdict.
 - **Phase 3** — dashboard polish: per-category cards with raw-evidence drill-down, redact-for-sharing toggle, demo deep-links (`?demo=good|bad`), animations, light/dark themes.
 - **Phase 4** — export: self-contained **HTML report** download, **Save as PDF** (print), and **Copy for AI** (a paste-ready summary + question) from the dashboard.
+- **Phase 5** — polish: responsive mobile layout, loading + dismissible error states, keyboard-accessible drop zone.
+- **Phase 6** — repo hardening: social/OG preview image + favicon/apple-icon, `SECURITY.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, issue/PR templates, and **CI** (web build + shellcheck + ruleset validity/parity).
 
 **Pending / next ⏭**
-- **Phase 5** — mobile polish, richer empty/error states.
+- Custom domain; real in-app UI screenshots in this README.
 - **Deferred** — notarized one-click `.pkg`/`.app` collector (removes the Terminal step); optional opt-in cloud history (would introduce a backend + privacy policy).
 
 **Known limitations**
@@ -213,9 +218,34 @@ The collector script is served at `/{macvitals.sh}` (synced into `web/public` at
 
 ---
 
+## FAQ & troubleshooting
+
+**Is it safe to run on a machine I don't own yet?**
+Yes — that's the whole point. It's read-only, needs no admin password for the core report, installs nothing, and writes only to its own report folder.
+
+**macOS says "unidentified developer" / won't run it.**
+Run it via `bash macvitals.sh` (as the install command does) rather than double-clicking — Gatekeeper doesn't block scripts passed to `bash`.
+
+**It asked for permission to control "System Events" / access other apps.**
+That prompt can appear when it reads your login items. Click **Allow** to include that check, or **Don't Allow** to skip it — the rest of the report is unaffected. It only asks for your password if you add `--with-sudo`.
+
+**Where's my report?**
+Wherever you pointed it — `~/Desktop/MacVitals_Report_<date>/` (and a matching `.zip`) by default from the website command. The terminal prints the exact path when it finishes.
+
+**"command not found" or a section says `[skipped]`.**
+That's graceful degradation — a tool isn't present or a value can't be read on your macOS version. The report notes it rather than guessing; the rest still works.
+
+**Does my data get uploaded?**
+No. The web app has no backend; your report is parsed and scored entirely in your browser. Use the **Redact for sharing** toggle to mask your serial before screenshotting.
+
+**Windows / Linux?**
+Not supported — every diagnostic uses a macOS-only tool, so the script exits early elsewhere.
+
+---
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The one hard rule: every change keeps the tool **read-only, dependency-free, and honest**. PRs that add checks should touch `shared/ruleset.json` (not hard-code logic in two places).
+See [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · [CHANGELOG.md](CHANGELOG.md). The one hard rule: every change keeps the tool **read-only, dependency-free, and honest**. PRs that add checks should touch `shared/ruleset.json` (not hard-code logic in two places), and CI runs `scripts/check-ruleset-sync.mjs` to enforce it.
 
 ---
 

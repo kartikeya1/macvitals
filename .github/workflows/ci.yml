@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: Web build (static export)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  shell:
+    name: Shell lint (shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # shellcheck is preinstalled on ubuntu-latest runners.
+      # -S error: fail only on errors, not style/info warnings.
+      - run: shellcheck -S error macvitals.sh macvitals-analyze.sh
+
+  ruleset:
+    name: Ruleset validity & CLI parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate ruleset.json is well-formed
+        run: node -e "JSON.parse(require('fs').readFileSync('shared/ruleset.json','utf8')); console.log('ruleset.json OK')"
+      - name: Check ruleset ↔ CLI message parity
+        run: node scripts/check-ruleset-sync.mjs

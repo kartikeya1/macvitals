@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a new check, improvement, or idea.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: What are you trying to learn about a Mac that MacVitals doesn't surface today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed solution
+      description: A new check, a UI change, an export format, etc. If it's a new check, which macOS command exposes the data?
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Constraints
+      options:
+        - label: This can be done read-only (no changing settings, no installs).
+        - label: This needs no new CLI dependency (stock macOS tools only).

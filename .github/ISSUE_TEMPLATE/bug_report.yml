@@ -1,0 +1,52 @@
+name: Bug report
+description: Something in the CLI or web app didn't work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for the report! Please **redact your serial number and UUIDs** from any pasted output."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen?
+      options:
+        - CLI (macvitals.sh / macvitals-analyze.sh)
+        - Web app (macvitals.vercel.app)
+        - Both
+    validations:
+      required: true
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Mac type
+      options:
+        - Apple Silicon (M1/M2/M3/M4)
+        - Intel
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "e.g. 15.5 (24F74)"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Ran `bash macvitals.sh ~/Desktop`
+        2. …
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output (redacted)
+      description: Paste any error text or the relevant section of the report — with serial/UUIDs removed.
+      render: text

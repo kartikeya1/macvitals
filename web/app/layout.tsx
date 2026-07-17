@@ -4,9 +4,34 @@ import ThemeToggle from "./ThemeToggle";
 import Reveal from "./Reveal";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://macvitals.vercel.app"),
   title: "MacVitals — check any Mac's health",
   description:
     "Run one read-only command on a Mac, then drop the report here for a plain-English health verdict. Everything is analyzed in your browser — nothing is uploaded.",
+  applicationName: "MacVitals",
+  keywords: [
+    "Mac health check",
+    "used MacBook",
+    "battery cycle count",
+    "SSD SMART",
+    "Activation Lock",
+    "MDM",
+    "macOS diagnostics",
+  ],
+  openGraph: {
+    type: "website",
+    url: "https://macvitals.vercel.app",
+    siteName: "MacVitals",
+    title: "MacVitals — is this Mac actually healthy?",
+    description:
+      "A read-only health check for any Mac. Run one command, drop the report here for a plain-English buy / don't-buy verdict — analyzed in your browser, nothing uploaded.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MacVitals — is this Mac actually healthy?",
+    description:
+      "Read-only Mac health check. One command, a plain-English verdict — analyzed in your browser, nothing uploaded.",
+  },
 };
 
 // Runs BEFORE first paint: resolve the theme (no flash) and, unless the user
