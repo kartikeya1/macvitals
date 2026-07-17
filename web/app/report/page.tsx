@@ -11,6 +11,14 @@ import {
   type Severity,
 } from "@/lib/analyze";
 import { healthySample, problemSample } from "@/lib/samples";
+import {
+  buildReportHtml,
+  buildAiText,
+  downloadTextFile,
+  copyText,
+  maskSerial,
+  reportFilename,
+} from "@/lib/export";
 
 const SEV_LABEL: Record<Severity, string> = {
   critical: "DEAL-BREAKER",
@@ -101,18 +109,35 @@ function CategoryCard({
   );
 }
 
-function maskSerial(s: string): string {
-  if (!s || s.length < 4 || s === "Unknown") return s;
-  return s.slice(0, 3) + "•".repeat(Math.max(4, s.length - 3));
-}
-
 export default function ReportPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isSample, setIsSample] = useState(false);
   const [redact, setRedact] = useState(false);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const onDownloadHtml = () => {
+    if (!result) return;
+    downloadTextFile(reportFilename(result, "html"), buildReportHtml(result, { redact }), "text/html");
+  };
+
+  const onCopyAi = async () => {
+    if (!result) return;
+    const ok = await copyText(buildAiText(result, { redact }));
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    }
+  };
+
+  const onSavePdf = () => {
+    // Expand every category card so its evidence prints, then open the OS print
+    // dialog (which offers "Save as PDF"). No PDF library needed.
+    document.querySelectorAll<HTMLDetailsElement>(".catcard").forEach((d) => (d.open = true));
+    window.print();
+  };
 
   const loadSample = useCallback((which: "good" | "bad") => {
     setError(null);
@@ -258,7 +283,24 @@ export default function ReportPage() {
             </ol>
           </div>
 
-          <p className="note" style={{ textAlign: "center" }}>
+          <div className="card result-in no-print export-bar">
+            <div>
+              <b>Save or share this report</b>
+              <div className="note" style={{ marginTop: 2 }}>
+                Everything is generated locally.{" "}
+                {redact ? "Serial is redacted in exports." : "Turn on “Redact for sharing” above to mask the serial."}
+              </div>
+            </div>
+            <div className="export-actions">
+              <button className="btn small" onClick={onDownloadHtml}>⬇ Download HTML report</button>
+              <button className="btn small secondary" onClick={onSavePdf}>🖨 Save as PDF</button>
+              <button className="btn small secondary" onClick={onCopyAi}>
+                {copied ? "Copied ✓" : "📋 Copy for AI"}
+              </button>
+            </div>
+          </div>
+
+          <p className="note no-print" style={{ textAlign: "center" }}>
             <button className="btn secondary" onClick={() => { setResult(null); setError(null); setIsSample(false); }}>
               Analyze another report
             </button>

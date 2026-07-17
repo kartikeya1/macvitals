@@ -191,9 +191,9 @@ The collector script is served at `/{macvitals.sh}` (synced into `web/public` at
 - **Phase 1** — shared `ruleset.json` consumed by both CLI and web (one source of truth).
 - **Phase 2** — static Next.js site: landing, "get the collector", in-browser report parsing + verdict.
 - **Phase 3** — dashboard polish: per-category cards with raw-evidence drill-down, redact-for-sharing toggle, demo deep-links (`?demo=good|bad`), animations, light/dark themes.
+- **Phase 4** — export: self-contained **HTML report** download, **Save as PDF** (print), and **Copy for AI** (a paste-ready summary + question) from the dashboard.
 
 **Pending / next ⏭**
-- **Phase 4** — export a self-contained HTML report + PDF + "copy for AI" from the dashboard.
 - **Phase 5** — mobile polish, richer empty/error states.
 - **Deferred** — notarized one-click `.pkg`/`.app` collector (removes the Terminal step); optional opt-in cloud history (would introduce a backend + privacy policy).
 

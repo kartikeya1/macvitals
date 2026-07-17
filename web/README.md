@@ -58,6 +58,7 @@ web/
 ## Roadmap (see ../docs/WEB_APP_PLAN.md)
 
 - ✅ Phase 2: landing + get-collector, in-browser parse/analyze, verdict + score.
-- ⏭ Phase 3: polished dashboard — score gauge, per-category cards with evidence,
+- ✅ Phase 3: polished dashboard — score gauge, per-category cards with evidence,
   redact-for-sharing toggle, demo mode.
-- ⏭ Phase 4: export a self-contained HTML report + PDF + "copy for AI".
+- ✅ Phase 4: export — self-contained HTML report, Save as PDF (print), Copy for AI.
+- ⏭ Phase 5: mobile polish, richer empty/error states.

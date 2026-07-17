@@ -122,8 +122,8 @@ Handled locally, in the browser:
 | **1** | `shared/ruleset.json`: analyzer rules as data; CLI loads it (with standalone fallback), web imports it — one source of truth | ✅ done |
 | **2** | Static Next.js app on Vercel: landing + "get the collector"; plus a working `/report` drag-drop → in-browser parse+analyze → verdict + score gauge + findings | ✅ done |
 | **3** | Dashboard polish: per-category cards with expandable raw evidence, redact-for-sharing toggle, demo deep-links (`?demo=good\|bad`), worst-first ordering, animations | ✅ done |
-| **4** | Export: self-contained HTML report + PDF + "copy for AI" | ⏭ next |
-| **5** | Polish: mobile pass, animations, empty/error states | ⏭ |
+| **4** | Export: self-contained HTML report download, Save as PDF (print), Copy for AI | ✅ done |
+| **5** | Polish: mobile pass, animations, empty/error states | ⏭ next |
 | **6** _(deferred)_ | Notarized `.pkg`/`.app` one-click collector; optional cloud history with accounts | ⏭ |
 
 > Phase 2 already includes a functional `/report` dashboard (verdict banner, radial score gauge, machine card, grouped findings, next-steps) — verified to produce the **same** verdict as the CLI. Phase 3 is polish (evidence drill-down, redaction, demo mode), not core function.
